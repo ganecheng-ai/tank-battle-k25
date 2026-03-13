@@ -25,6 +25,11 @@ class Tank(pygame.sprite.Sprite):
         self.shoot_cooldown = 0
         self.shoot_cooldown_max = 15 if is_player else 30
 
+        # 道具效果属性
+        self.armor_piercing = False  # 穿甲弹
+        self.shield = False          # 护盾
+        self.shield_blink = 0        # 护盾闪烁计时器
+
         # 颜色设置
         if color is None:
             self.color = COLOR_GREEN if is_player else COLOR_GRAY
@@ -138,10 +143,17 @@ class Tank(pygame.sprite.Sprite):
         elif self.direction == DIR_RIGHT:
             center_x += self.size // 2
 
-        return Bullet(center_x, center_y, self.direction, self.is_player)
+        # 根据穿甲弹属性设置子弹威力
+        power = 2 if self.armor_piercing else 1
+        return Bullet(center_x, center_y, self.direction, self.is_player, power)
 
     def take_damage(self, damage):
         """受到伤害"""
+        # 护盾可以抵挡一次伤害
+        if self.shield:
+            self.shield = False
+            return
+
         self.hp -= damage
         if self.hp <= 0:
             self.alive = False
@@ -151,6 +163,12 @@ class Tank(pygame.sprite.Sprite):
         """更新坦克状态"""
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
+
+        # 更新护盾闪烁
+        if self.shield:
+            self.shield_blink += 1
+            if self.shield_blink >= 20:
+                self.shield_blink = 0
 
     def draw_hp(self, surface):
         """绘制生命值"""
@@ -166,6 +184,15 @@ class Tank(pygame.sprite.Sprite):
             pygame.draw.rect(surface, COLOR_BLACK, (x, y, bar_width, bar_height))
             pygame.draw.rect(surface, COLOR_YELLOW if self.is_player else COLOR_RED,
                            (x, y, fill_width, bar_height))
+
+    def draw_shield(self, surface):
+        """绘制护盾效果"""
+        if self.shield and self.shield_blink < 10:
+            # 护盾闪烁效果
+            center = self.rect.center
+            radius = self.size // 2 + 4
+            pygame.draw.circle(surface, COLOR_BLUE, center, radius, 2)
+            pygame.draw.circle(surface, (100, 150, 255), center, radius - 2, 1)
 
 
 class PlayerTank(Tank):

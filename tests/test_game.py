@@ -25,7 +25,7 @@ class TestConfig(unittest.TestCase):
 
     def test_version(self):
         """测试版本号"""
-        self.assertEqual(VERSION, "0.3.0")
+        self.assertEqual(VERSION, "0.4.0")
 
     def test_screen_settings(self):
         """测试屏幕设置"""
@@ -189,6 +189,103 @@ class TestBullet(unittest.TestCase):
         initial_y = bullet.rect.y
         bullet.update([], [], None)
         self.assertTrue(bullet.rect.y < initial_y)
+
+    def test_bullet_with_power(self):
+        """测试带威力的子弹"""
+        bullet = Bullet(100, 100, 0, True, power=2)
+        self.assertEqual(bullet.power, 2)
+
+
+class TestPowerUp(unittest.TestCase):
+    """测试道具系统"""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+
+    def test_powerup_creation(self):
+        """测试道具创建"""
+        from powerup import PowerUp
+        powerup = PowerUp(100, 100, PowerUp.TYPE_EXTRA_LIFE)
+        self.assertEqual(powerup.power_type, PowerUp.TYPE_EXTRA_LIFE)
+        self.assertTrue(powerup.active)
+
+    def test_powerup_types(self):
+        """测试道具类型"""
+        from powerup import PowerUp
+        # 测试所有道具类型
+        self.assertEqual(PowerUp.TYPE_EXTRA_LIFE, 1)
+        self.assertEqual(PowerUp.TYPE_SPEED_BOOST, 2)
+        self.assertEqual(PowerUp.TYPE_ARMOR_PIERCING, 3)
+        self.assertEqual(PowerUp.TYPE_SHIELD, 4)
+        self.assertEqual(PowerUp.TYPE_BOMB, 5)
+
+    def test_powerup_manager_creation(self):
+        """测试道具管理器创建"""
+        from powerup import PowerUpManager
+        manager = PowerUpManager()
+        self.assertEqual(len(manager.powerups), 0)
+
+    def test_powerup_spawn(self):
+        """测试道具生成"""
+        from powerup import PowerUpManager, PowerUp
+        manager = PowerUpManager()
+        powerup = manager.spawn_powerup(100, 100, PowerUp.TYPE_EXTRA_LIFE)
+        self.assertIsNotNone(powerup)
+        self.assertEqual(len(manager.powerups), 1)
+
+
+class TestParticles(unittest.TestCase):
+    """测试粒子效果系统"""
+
+    @classmethod
+    def setUpClass(cls):
+        pygame.init()
+
+    def test_particle_creation(self):
+        """测试粒子创建"""
+        from particles import Particle
+        particle = Particle(100, 100, (255, 0, 0), 4, (1, 1), 30)
+        self.assertTrue(particle.active)
+        self.assertEqual(particle.lifetime, 30)
+
+    def test_explosion_creation(self):
+        """测试爆炸效果创建"""
+        from particles import Explosion
+        explosion = Explosion(100, 100, Explosion.TYPE_MEDIUM)
+        self.assertTrue(explosion.active)
+        self.assertEqual(explosion.explosion_type, Explosion.TYPE_MEDIUM)
+
+    def test_particle_manager_creation(self):
+        """测试粒子管理器创建"""
+        from particles import ParticleManager
+        manager = ParticleManager()
+        self.assertEqual(len(manager.explosions), 0)
+        self.assertEqual(len(manager.particles), 0)
+
+    def test_particle_manager_add_explosion(self):
+        """测试添加爆炸效果"""
+        from particles import ParticleManager, Explosion
+        manager = ParticleManager()
+        explosion = manager.add_explosion(100, 100, Explosion.TYPE_SMALL)
+        self.assertIsNotNone(explosion)
+        self.assertEqual(len(manager.explosions), 1)
+
+
+class TestSounds(unittest.TestCase):
+    """测试音效系统"""
+
+    def test_sound_manager_creation(self):
+        """测试音效管理器创建"""
+        from sounds import SoundManager
+        sound_manager = SoundManager()
+        self.assertIsNotNone(sound_manager)
+
+    def test_music_manager_creation(self):
+        """测试音乐管理器创建"""
+        from sounds import MusicManager
+        music_manager = MusicManager()
+        self.assertIsNotNone(music_manager)
 
 
 class TestUI(unittest.TestCase):

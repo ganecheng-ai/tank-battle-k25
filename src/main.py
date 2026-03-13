@@ -16,6 +16,9 @@ from map import GameMap
 from tank import PlayerTank, EnemyTank
 from bullet import Bullet
 from ui import Menu, HUD, GameOverScreen, PauseScreen, LevelSelectScreen
+from powerup import PowerUpManager
+from particles import ParticleManager, TankTrail
+from sounds import SoundManager, MusicManager, create_placeholder_sounds
 
 # 额外游戏状态
 STATE_LEVEL_SELECT = 5
@@ -49,6 +52,18 @@ class Game:
         self.bullets = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
 
+        # 道具系统
+        self.powerup_manager = PowerUpManager()
+
+        # 粒子效果系统
+        self.particle_manager = ParticleManager()
+        self.tank_trail = TankTrail()
+
+        # 音效系统
+        create_placeholder_sounds()  # 创建音效目录
+        self.sound_manager = SoundManager()
+        self.music_manager = MusicManager()
+
         # UI
         self.menu = Menu()
         self.hud = HUD()
@@ -79,6 +94,11 @@ class Game:
         self.bullets.empty()
         self.all_sprites.empty()
 
+        # 重置系统
+        self.powerup_manager.clear()
+        self.particle_manager.clear()
+        self.tank_trail.clear()
+
         # 加载地图
         self.map = GameMap()
         self.map.load_map(level)
@@ -90,6 +110,10 @@ class Game:
 
         # 创建敌人
         self.spawn_enemies()
+
+        # 播放游戏开始音效
+        self.sound_manager.play_game_start()
+        self.music_manager.play_game_music()
 
         # 更新HUD
         self.hud.score = self.score
@@ -165,6 +189,9 @@ class Game:
         if self.player and self.player.alive:
             self.player.update()
 
+            # 添加移动轨迹
+            self.tank_trail.add_trail(self.player)
+
             # 处理玩家移动
             moved = False
             if self.keys_pressed['up']:
@@ -184,11 +211,14 @@ class Game:
                 if bullet:
                     self.bullets.add(bullet)
                     self.all_sprites.add(bullet)
+                    self.sound_manager.play_shoot()
 
         # 更新敌人
         for enemy in self.enemies:
             if enemy.alive:
                 enemy.update()
+                # 添加移动轨迹
+                self.tank_trail.add_trail(enemy)
                 # AI更新
                 bullet = enemy.ai_update([self.player] if self.player else [], solid_tiles)
                 if bullet:
@@ -199,35 +229,63 @@ class Game:
         all_tanks = [self.player] + list(self.enemies) if self.player else list(self.enemies)
         all_tanks = [t for t in all_tanks if t is not None]
         for bullet in self.bullets:
-            bullet.update(self.map.tiles, all_tanks, self.map.base)
+            hit_wall = bullet.update(self.map.tiles, all_tanks, self.map.base)
+            # 检查子弹是否击中了墙壁
+            if not bullet.active and hit_wall:
+                self.particle_manager.add_bullet_hit(bullet, is_wall=True)
+                self.sound_manager.play_hit()
 
         # 清理死亡的精灵
         for enemy in list(self.enemies):
             if not enemy.alive:
+                # 添加爆炸效果
+                self.particle_manager.add_tank_explosion(enemy)
+                self.sound_manager.play_explosion()
                 self.enemies.remove(enemy)
                 self.all_sprites.remove(enemy)
                 self.score += 100 * enemy.enemy_type
                 self.logger.info(f"消灭敌人，获得 {100 * enemy.enemy_type} 分")
+                # 随机生成道具（20%概率）
+                if random.random() < 0.2:
+                    self.powerup_manager.spawn_powerup(enemy.rect.x, enemy.rect.y)
 
         for bullet in list(self.bullets):
             if not bullet.active:
                 self.bullets.remove(bullet)
                 self.all_sprites.remove(bullet)
 
+        # 更新道具系统
+        self.powerup_manager.update(self.player, self.enemies, solid_tiles)
+        # 随机生成道具
+        self.powerup_manager.spawn_random()
+
+        # 更新粒子效果
+        self.particle_manager.update()
+        self.tank_trail.update()
+
         # 检查游戏结束条件
         if self.player and not self.player.alive:
             self.logger.info("玩家死亡，游戏结束")
+            self.particle_manager.add_tank_explosion(self.player)
+            self.sound_manager.play_explosion()
+            self.sound_manager.play_game_over()
+            self.music_manager.fadeout(1000)
             self.state = STATE_GAME_OVER
             self.game_over_screen = GameOverScreen(victory=False)
 
         if self.map.base and self.map.base.destroyed:
             self.logger.info("基地被摧毁，游戏结束")
+            self.particle_manager.add_base_explosion(self.map.base)
+            self.sound_manager.play_explosion()
+            self.sound_manager.play_game_over()
+            self.music_manager.fadeout(1000)
             self.state = STATE_GAME_OVER
             self.game_over_screen = GameOverScreen(victory=False)
 
         # 检查胜利条件
         if len([e for e in self.enemies if e.alive]) == 0:
             self.logger.info("所有敌人被消灭，关卡完成")
+            self.sound_manager.play_victory()
             if self.level < 5:
                 self.level += 1
                 # 解锁新关卡
@@ -237,6 +295,7 @@ class Game:
             else:
                 # 通关所有关卡
                 self.logger.info("恭喜！通关所有关卡！")
+                self.music_manager.fadeout(1000)
                 self.state = STATE_GAME_OVER
                 self.game_over_screen = GameOverScreen(victory=True)
 
@@ -277,21 +336,49 @@ class Game:
             if self.map:
                 self.map.draw(self.screen)
 
+            # 绘制坦克轨迹
+            self.tank_trail.draw(self.screen)
+
+            # 绘制道具
+            self.powerup_manager.draw(self.screen)
+
             # 绘制所有精灵
             for sprite in self.all_sprites:
                 self.screen.blit(sprite.image, sprite.rect)
                 if hasattr(sprite, 'draw_hp'):
                     sprite.draw_hp(self.screen)
+                if hasattr(sprite, 'draw_shield'):
+                    sprite.draw_shield(self.screen)
+
+            # 绘制粒子效果
+            self.particle_manager.draw(self.screen)
 
             # 绘制HUD
             self.hud.draw(self.screen, [self.player] if self.player else [], self.enemies)
+
+            # 绘制当前生效的效果
+            self.powerup_manager.draw_active_effects(self.screen, 10, GAME_AREA_TOP + 10)
 
         elif self.state == STATE_PAUSED:
             # 先绘制游戏画面
             if self.map:
                 self.map.draw(self.screen)
+
+            # 绘制坦克轨迹
+            self.tank_trail.draw(self.screen)
+
+            # 绘制道具
+            self.powerup_manager.draw(self.screen)
+
             for sprite in self.all_sprites:
                 self.screen.blit(sprite.image, sprite.rect)
+                if hasattr(sprite, 'draw_hp'):
+                    sprite.draw_hp(self.screen)
+                if hasattr(sprite, 'draw_shield'):
+                    sprite.draw_shield(self.screen)
+
+            # 绘制粒子效果
+            self.particle_manager.draw(self.screen)
             self.hud.draw(self.screen, [self.player] if self.player else [], self.enemies)
 
             # 再绘制暂停界面
@@ -314,8 +401,22 @@ class Game:
             # 绘制游戏画面
             if self.map:
                 self.map.draw(self.screen)
+
+            # 绘制坦克轨迹
+            self.tank_trail.draw(self.screen)
+
+            # 绘制道具
+            self.powerup_manager.draw(self.screen)
+
             for sprite in self.all_sprites:
                 self.screen.blit(sprite.image, sprite.rect)
+                if hasattr(sprite, 'draw_hp'):
+                    sprite.draw_hp(self.screen)
+                if hasattr(sprite, 'draw_shield'):
+                    sprite.draw_shield(self.screen)
+
+            # 绘制粒子效果
+            self.particle_manager.draw(self.screen)
 
             # 绘制游戏结束界面
             mouse_pos = pygame.mouse.get_pos()

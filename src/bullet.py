@@ -42,9 +42,11 @@ class Bullet(pygame.sprite.Sprite):
         self.active = True
 
     def update(self, map_tiles, tanks, base=None):
-        """更新子弹位置"""
+        """更新子弹位置，返回是否击中了墙壁"""
         if not self.active:
-            return
+            return False
+
+        hit_wall = False
 
         self.rect.x += self.vx
         self.rect.y += self.vy
@@ -54,7 +56,7 @@ class Bullet(pygame.sprite.Sprite):
             self.rect.top < 50 or self.rect.bottom > 600):
             self.active = False
             self.kill()
-            return
+            return False
 
         # 检查与地图元素的碰撞
         for tile in map_tiles:
@@ -63,18 +65,18 @@ class Bullet(pygame.sprite.Sprite):
                     tile.take_damage(self.power)
                     self.active = False
                     self.kill()
-                    return
+                    return True  # 击中了可破坏墙壁
                 elif tile.solid:
                     self.active = False
                     self.kill()
-                    return
+                    return True  # 击中了不可破坏墙壁
 
         # 检查与基地的碰撞
         if base and self.rect.colliderect(base.rect):
             base.destroyed = True
             self.active = False
             self.kill()
-            return
+            return True
 
         # 检查与坦克的碰撞
         for tank in tanks:
@@ -83,4 +85,6 @@ class Bullet(pygame.sprite.Sprite):
                     tank.take_damage(self.power)
                     self.active = False
                     self.kill()
-                    return
+                    return False  # 击中坦克不算击中墙壁
+
+        return False
