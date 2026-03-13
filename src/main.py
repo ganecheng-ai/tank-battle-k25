@@ -8,6 +8,7 @@ import random
 from config import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE, GAME_AREA_TOP,
     STATE_MENU, STATE_PLAYING, STATE_PAUSED, STATE_GAME_OVER, STATE_VICTORY,
+    STATE_LEVEL_SELECT,
     KEY_PLAYER1_UP, KEY_PLAYER1_DOWN, KEY_PLAYER1_LEFT, KEY_PLAYER1_RIGHT, KEY_PLAYER1_SHOOT,
     DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT
 )
@@ -15,7 +16,7 @@ from logger import setup_logger
 from map import GameMap
 from tank import PlayerTank, EnemyTank
 from bullet import Bullet
-from ui import Menu, HUD, GameOverScreen, PauseScreen
+from ui import Menu, HUD, GameOverScreen, PauseScreen, LevelSelectScreen
 
 
 class Game:
@@ -47,6 +48,7 @@ class Game:
 
         # UI
         self.menu = Menu()
+        self.level_select = LevelSelectScreen()
         self.hud = HUD()
         self.pause_screen = PauseScreen()
         self.game_over_screen = None
@@ -234,11 +236,24 @@ class Game:
             result = self.menu.update(mouse_pos, mouse_pressed)
 
             if result == 'start':
-                self.start_game()
+                self.state = STATE_LEVEL_SELECT
             elif result == 'quit':
                 self.running = False
 
             self.menu.draw(self.screen)
+
+        elif self.state == STATE_LEVEL_SELECT:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+            result = self.level_select.update(mouse_pos, mouse_pressed)
+
+            if result == 'start':
+                self.level = self.level_select.get_selected_level()
+                self.start_game()
+            elif result == 'back':
+                self.state = STATE_MENU
+
+            self.level_select.draw(self.screen)
 
         elif self.state == STATE_PLAYING:
             # 绘制地图

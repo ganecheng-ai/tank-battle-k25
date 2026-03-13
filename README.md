@@ -2,7 +2,7 @@
 
 一款使用 Python 和 Pygame 开发的经典坦克大战游戏，致敬红白机时代的经典游戏。
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
@@ -111,7 +111,12 @@ tank-battle-k25/
 
 ## 版本历史
 
-### v0.2.0 (当前版本)
+### v0.3.0 (当前版本)
+- 实现关卡选择界面
+- 完善游戏菜单系统
+- 优化UI交互体验
+
+### v0.2.0
 - 实现地图系统（砖块、钢铁、水、草地、基地）
 - 实现玩家坦克（移动、射击、生命值系统）
 - 实现子弹系统和碰撞检测

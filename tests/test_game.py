@@ -25,7 +25,7 @@ class TestConfig(unittest.TestCase):
 
     def test_version(self):
         """测试版本号"""
-        self.assertEqual(VERSION, "0.1.0")
+        self.assertEqual(VERSION, "0.3.0")
 
     def test_screen_settings(self):
         """测试屏幕设置"""
