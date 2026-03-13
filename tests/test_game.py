@@ -25,7 +25,7 @@ class TestConfig(unittest.TestCase):
 
     def test_version(self):
         """测试版本号"""
-        self.assertEqual(VERSION, "0.4.0")
+        self.assertEqual(VERSION, "1.0.0")
 
     def test_screen_settings(self):
         """测试屏幕设置"""
@@ -305,7 +305,8 @@ class TestUI(unittest.TestCase):
     def test_menu_creation(self):
         """测试菜单创建"""
         menu = Menu()
-        self.assertIn('start', menu.buttons)
+        self.assertIn('single', menu.buttons)
+        self.assertIn('two_player', menu.buttons)
         self.assertIn('quit', menu.buttons)
 
     def test_hud_creation(self):

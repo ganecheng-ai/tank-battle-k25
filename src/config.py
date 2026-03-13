@@ -4,7 +4,7 @@
 import pygame
 
 # 游戏版本
-VERSION = "0.4.0"
+VERSION = "1.0.0"
 
 # 窗口设置
 SCREEN_WIDTH = 800
@@ -57,6 +57,10 @@ STATE_PLAYING = 1
 STATE_PAUSED = 2
 STATE_GAME_OVER = 3
 STATE_VICTORY = 4
+
+# 游戏模式
+MODE_SINGLE = 0
+MODE_TWO_PLAYER = 1
 
 # 字体设置 (使用系统默认字体)
 FONT_NAME = None
