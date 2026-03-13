@@ -1,6 +1,7 @@
 """
 坦克模块
 """
+import random
 import pygame
 from config import (
     TANK_SIZE, PLAYER_SPEED, ENEMY_SPEED, DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT,
@@ -249,7 +250,6 @@ class EnemyTank(Tank):
         # 随机改变方向
         if self.ai_timer >= 60:
             self.ai_timer = 0
-            import random
             self.direction = random.randint(0, 3)
             self.image = self.images[self.direction]
 
@@ -259,12 +259,10 @@ class EnemyTank(Tank):
 
         if not self.move(self.direction, map_tiles, other_tanks):
             # 移动失败，随机选择新方向
-            import random
             self.direction = random.randint(0, 3)
             self.image = self.images[self.direction]
 
         # 随机射击
-        import random
         if random.random() < 0.02:
             return self.shoot()
         return None

@@ -290,8 +290,7 @@ class Game:
                     self.all_sprites.add(bullet)
 
         # 更新子弹
-        all_tanks = [self.player, self.player2] + list(self.enemies) if self.player2 else [self.player] + list(self.enemies)
-        all_tanks = [t for t in all_tanks if t is not None and t.alive]
+        all_tanks = [t for t in [self.player, self.player2] + list(self.enemies) if t and t.alive]
         for bullet in self.bullets:
             hit_wall = bullet.update(self.map.tiles, all_tanks, self.map.base)
             # 检查子弹是否击中了墙壁

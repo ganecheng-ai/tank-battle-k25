@@ -1,6 +1,7 @@
 """
 地图模块
 """
+import random
 import pygame
 from config import (
     TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, GAME_AREA_TOP,
@@ -78,7 +79,6 @@ class MapTile(pygame.sprite.Sprite):
             self.image.fill((0, 100, 0, 180))
             # 添加草丛纹理
             for _ in range(20):
-                import random
                 gx = random.randint(0, self.size-4)
                 gy = random.randint(0, self.size-4)
                 pygame.draw.rect(self.image, COLOR_GREEN, (gx, gy, 4, 8))
