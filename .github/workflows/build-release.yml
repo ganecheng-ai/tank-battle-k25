@@ -1,0 +1,177 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+            ext: .exe
+          - os: ubuntu-latest
+            target: linux
+            ext: .tar.gz
+          - os: macos-latest
+            target: macos
+            ext: .dmg
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+
+      - name: Install dependencies (macOS)
+        if: matrix.target == 'macos'
+        run: |
+          brew install sdl2 sdl2_image sdl2_mixer sdl2_ttf
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --windowed --name tank-battle src/main.py
+
+      - name: Package (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          mkdir -p dist/tank-battle-linux
+          cp dist/tank-battle dist/tank-battle-linux/
+          cp -r assets dist/tank-battle-linux/ 2>/dev/null || true
+          tar -czvf dist/tank-battle-linux-x86_64.tar.gz -C dist tank-battle-linux
+
+      - name: Package (macOS)
+        if: matrix.target == 'macos'
+        run: |
+          mkdir -p dist/tank-battle.app/Contents/MacOS
+          mkdir -p dist/tank-battle.app/Contents/Resources
+          cp dist/tank-battle dist/tank-battle.app/Contents/MacOS/
+          cp -r assets dist/tank-battle.app/Contents/Resources/ 2>/dev/null || true
+          echo '<?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>tank-battle</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.ganecheng.tank-battle</string>
+              <key>CFBundleName</key>
+              <string>Tank Battle</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+          </dict>
+          </plist>' > dist/tank-battle.app/Contents/Info.plist
+          hdiutil create -volname "Tank Battle" -srcfolder dist/tank-battle.app -ov -format UDZO dist/tank-battle-macos-x86_64.dmg
+
+      - name: Rename Windows executable
+        if: matrix.target == 'windows'
+        run: |
+          mkdir -p dist/tank-battle-windows
+          cp dist/tank-battle.exe dist/tank-battle-windows/
+          xcopy /E /I assets dist\tank-battle-windows\assets 2>nul || echo "No assets folder"
+          cd dist && powershell Compress-Archive -Path tank-battle-windows -DestinationPath tank-battle-windows-x86_64.zip
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tank-battle-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.dmg
+            dist/*.zip
+            dist/*.exe
+
+  generate-checksums:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          find . -type f \( -name "*.tar.gz" -o -name "*.dmg" -o -name "*.zip" -o -name "*.exe" \) -exec sha256sum {} \; > ../checksums.txt
+          cat ../checksums.txt
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: checksums.txt
+
+  release:
+    needs: [build, generate-checksums]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          echo "## 更新内容" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 亮点介绍" >> release_notes.md
+          echo "- 精美的游戏画面" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 新增功能" >> release_notes.md
+          echo "- 基础游戏功能" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 优化改进" >> release_notes.md
+          echo "- 性能优化" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 问题修复" >> release_notes.md
+          echo "- 无" >> release_notes.md
+          echo "" >> release_notes.md
+          cat release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Tank Battle ${{ steps.get_version.outputs.VERSION }}
+          body_path: release_notes.md
+          files: |
+            artifacts/**/*
+            checksums.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
