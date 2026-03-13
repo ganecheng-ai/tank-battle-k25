@@ -17,7 +17,7 @@ from logger import setup_logger
 from map import GameMap, MapTile, Base
 from tank import Tank, PlayerTank, EnemyTank
 from bullet import Bullet
-from ui import Button, Menu, HUD, GameOverScreen, PauseScreen
+from ui import Button, Menu, HUD, GameOverScreen, PauseScreen, LevelSelectScreen
 
 
 class TestConfig(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestConfig(unittest.TestCase):
 
     def test_version(self):
         """测试版本号"""
-        self.assertEqual(VERSION, "0.2.0")
+        self.assertEqual(VERSION, "0.3.0")
 
     def test_screen_settings(self):
         """测试屏幕设置"""
@@ -88,6 +88,21 @@ class TestMap(unittest.TestCase):
         result = game_map.load_map()
         self.assertTrue(result)
         self.assertTrue(len(game_map.tiles) > 0)
+
+    def test_game_map_load_level(self):
+        """测试加载特定关卡"""
+        game_map = GameMap()
+        # 测试加载各个关卡
+        for level in range(1, 6):
+            result = game_map.load_map(level)
+            self.assertTrue(result)
+            self.assertEqual(game_map.current_level, level)
+            self.assertTrue(len(game_map.tiles) > 0)
+
+    def test_game_map_level_count(self):
+        """测试关卡数量"""
+        game_map = GameMap()
+        self.assertEqual(game_map.get_level_count(), 5)
 
     def test_spawn_points(self):
         """测试出生点"""
@@ -213,6 +228,21 @@ class TestUI(unittest.TestCase):
         """测试游戏结束界面创建"""
         game_over = GameOverScreen(victory=False)
         self.assertFalse(game_over.victory)
+
+    def test_level_select_screen_creation(self):
+        """测试关卡选择界面创建"""
+        level_select = LevelSelectScreen(max_level=5)
+        self.assertEqual(level_select.max_level, 5)
+        self.assertEqual(level_select.selected_level, 1)
+        self.assertEqual(len(level_select.level_buttons), 5)
+
+    def test_level_buttons(self):
+        """测试关卡按钮"""
+        level_select = LevelSelectScreen(max_level=3)
+        # 检查每个关卡的按钮
+        for i, (level, btn) in enumerate(level_select.level_buttons):
+            self.assertEqual(level, i + 1)
+            self.assertEqual(btn.text, str(i + 1))
 
 
 class TestIntegration(unittest.TestCase):

@@ -78,7 +78,7 @@ class Bullet(pygame.sprite.Sprite):
 
         # 检查与坦克的碰撞
         for tank in tanks:
-            if tank != self and self.is_player != tank.is_player:
+            if self.is_player != tank.is_player:
                 if self.rect.colliderect(tank.rect):
                     tank.take_damage(self.power)
                     self.active = False

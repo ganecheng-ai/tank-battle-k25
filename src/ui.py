@@ -217,3 +217,78 @@ class PauseScreen:
             if button.update(mouse_pos, mouse_pressed):
                 return key
         return None
+
+
+class LevelSelectScreen:
+    """关卡选择界面"""
+
+    def __init__(self, max_level=5):
+        self.font_title = pygame.font.SysFont(None, FONT_SIZE_HUGE)
+        self.font_normal = pygame.font.SysFont(None, FONT_SIZE_NORMAL)
+        self.max_level = max_level
+        self.selected_level = 1
+
+        # 创建关卡按钮
+        self.level_buttons = []
+        button_size = 60
+        gap = 20
+        levels_per_row = 5
+        start_x = (SCREEN_WIDTH - (levels_per_row * (button_size + gap) - gap)) // 2
+        start_y = 220
+
+        for i in range(1, max_level + 1):
+            row = (i - 1) // levels_per_row
+            col = (i - 1) % levels_per_row
+            x = start_x + col * (button_size + gap)
+            y = start_y + row * (button_size + gap)
+            btn = Button(x, y, button_size, button_size, str(i), FONT_SIZE_NORMAL)
+            self.level_buttons.append((i, btn))
+
+        # 返回按钮
+        self.back_button = Button(
+            (SCREEN_WIDTH - 200) // 2, 420, 200, 50, "返回菜单"
+        )
+
+    def draw(self, surface):
+        """绘制关卡选择界面"""
+        # 背景
+        surface.fill(COLOR_BLACK)
+
+        # 标题
+        title = self.font_title.render("选择关卡", True, COLOR_GREEN)
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, 100))
+        surface.blit(title, title_rect)
+
+        # 说明文字
+        info = self.font_normal.render(f"当前选择: 第 {self.selected_level} 关", True, COLOR_YELLOW)
+        info_rect = info.get_rect(center=(SCREEN_WIDTH // 2, 160))
+        surface.blit(info, info_rect)
+
+        # 关卡按钮
+        for level, btn in self.level_buttons:
+            # 高亮当前选中的关卡
+            if level == self.selected_level:
+                btn.normal_color = COLOR_GREEN
+                btn.hover_color = (0, 200, 0)
+            else:
+                btn.normal_color = COLOR_GRAY
+                btn.hover_color = COLOR_GREEN
+            btn.draw(surface)
+
+        # 返回按钮
+        self.back_button.draw(surface)
+
+    def update(self, mouse_pos, mouse_pressed):
+        """更新状态"""
+        # 检查关卡按钮
+        for level, btn in self.level_buttons:
+            if btn.update(mouse_pos, mouse_pressed):
+                self.selected_level = level
+                return f'level_{level}'
+
+        # 检查返回按钮
+        if self.back_button.update(mouse_pos, mouse_pressed):
+            return 'back'
+
+        return None
+

@@ -130,35 +130,152 @@ class Base(MapTile):
 class GameMap:
     """游戏地图类"""
 
+    # 关卡地图集合
+    LEVELS = {
+        1: [
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W........................W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W........................W",
+            "W..SS..BB......BB..SS..B.W",
+            "W..SS..BB......BB..SS..B.W",
+            "W......BB..BB..BB......B.W",
+            "W......BB..BB..BB......B.W",
+            "W..BB......SS......BB..B.W",
+            "W..BB......SS......BB..B.W",
+            "W..............SS........W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W......SS............BB.W",
+            "W......SS............BB.W",
+            "W..BB......BB..BB......B.W",
+            "W..BB......BB..BB......B.W",
+            "W..BB..SS..BB..BB..SS..B.W",
+            "W..BB..SS..BB..BB..SS..B.W",
+            "W........................W",
+            "W..BB..BB..BB..BB..BB..B.W",
+            "W..BB..BB..B...BB..BB..B.W",
+            "W...........E............W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ],
+        2: [
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W........................W",
+            "W..SS..SS..SS..SS..SS..S.W",
+            "W..SS..SS..SS..SS..SS..S.W",
+            "W........................W",
+            "W..BB......BB......BB....W",
+            "W..BB......BB......BB....W",
+            "W......BB......BB........W",
+            "W......BB......BB........W",
+            "W..SS......SS......SS..S.W",
+            "W..SS......SS......SS..S.W",
+            "W......BB......BB........W",
+            "W......BB......BB........W",
+            "W..BB......BB......BB....W",
+            "W..BB......BB......BB....W",
+            "W........................W",
+            "W..SS..SS..SS..SS..SS..S.W",
+            "W..SS..SS..SS..SS..SS..S.W",
+            "W......BB......BB........W",
+            "W......BB......BB........W",
+            "W..BB......BB......BB....W",
+            "W..BB......BB......BB....W",
+            "W........................W",
+            "W..BB..BB..B...BB..BB..B.W",
+            "W...........E............W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ],
+        3: [
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W........................W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W......BB......BB........W",
+            "W......BB......BB........W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W......BB......BB........W",
+            "W......BB......BB........W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W..SS..BB..SS..BB..SS..B.W",
+            "W........................W",
+            "W..BB..BB..B...BB..BB..B.W",
+            "W...........E............W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ],
+        4: [
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W.........WWWWWW.........W",
+            "W..BB..B..W....W..B..BB..W",
+            "W..BB..B..W....W..B..BB..W",
+            "W......B..W....W..B......W",
+            "W..SS..B..W....W..B..SS..W",
+            "W..SS..B..W....W..B..SS..W",
+            "W......B..W....W..B......W",
+            "W..BB..B..W....W..B..BB..W",
+            "W..BB..B..W....W..B..BB..W",
+            "W......B..W....W..B......W",
+            "W..SS..B..W....W..B..SS..W",
+            "W..SS..B..W....W..B..SS..W",
+            "W......B..W....W..B......W",
+            "W..BB..B..W....W..B..BB..W",
+            "W..BB..B..W....W..B..BB..W",
+            "W......B..W....W..B......W",
+            "W..SS..B..W....W..B..SS..W",
+            "W..SS..B..W....W..B..SS..W",
+            "W......B..W....W..B......W",
+            "W..BB..B..W....W..B..BB..W",
+            "W..BB..B..W....W..B..BB..W",
+            "W.........W....W.........W",
+            "W..BB..BB..B...BB..BB..B.W",
+            "W...........E............W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ],
+        5: [
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W........................W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W........................W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W........................W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W..SS..BB..SS..BB..SS....W",
+            "W........................W",
+            "W..BB..SS..BB..SS..BB..S.W",
+            "W..BB..BB..B...BB..BB..B.W",
+            "W...........E............W",
+            "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+        ],
+    }
+
     # 默认关卡地图 (26x26)
-    DEFAULT_MAP = [
-        "WWWWWWWWWWWWWWWWWWWWWWWWWW",
-        "W........................W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W........................W",
-        "W..SS..BB......BB..SS..B.W",
-        "W..SS..BB......BB..SS..B.W",
-        "W......BB..BB..BB......B.W",
-        "W......BB..BB..BB......B.W",
-        "W..BB......SS......BB..B.W",
-        "W..BB......SS......BB..B.W",
-        "W..............SS........W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W......SS............BB.W",
-        "W......SS............BB.W",
-        "W..BB......BB..BB......B.W",
-        "W..BB......BB..BB......B.W",
-        "W..BB..SS..BB..BB..SS..B.W",
-        "W..BB..SS..BB..BB..SS..B.W",
-        "W........................W",
-        "W..BB..BB..BB..BB..BB..B.W",
-        "W..BB..BB..B...BB..BB..B.W",
-        "W...........E............W",
-        "WWWWWWWWWWWWWWWWWWWWWWWWWW",
-    ]
+    DEFAULT_MAP = LEVELS[1]
 
     def __init__(self):
         self.tiles = pygame.sprite.Group()
@@ -169,11 +286,17 @@ class GameMap:
         self.base = None
         self.width = MAP_WIDTH * TILE_SIZE
         self.height = MAP_HEIGHT * TILE_SIZE
+        self.current_level = 1
+        self.max_level = len(self.LEVELS)
 
-    def load_map(self, map_data=None):
+    def load_map(self, level=1):
         """加载地图"""
-        if map_data is None:
+        if level in self.LEVELS:
+            map_data = self.LEVELS[level]
+            self.current_level = level
+        else:
             map_data = self.DEFAULT_MAP
+            self.current_level = 1
 
         self.tiles.empty()
         self.bricks.empty()
@@ -226,3 +349,7 @@ class GameMap:
             (20 * TILE_SIZE, 2 * TILE_SIZE),
         ]
         return player_spawn, enemy_spawns
+
+    def get_level_count(self):
+        """获取关卡总数"""
+        return len(self.LEVELS)

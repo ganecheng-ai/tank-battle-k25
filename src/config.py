@@ -4,7 +4,7 @@
 import pygame
 
 # 游戏版本
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 # 窗口设置
 SCREEN_WIDTH = 800

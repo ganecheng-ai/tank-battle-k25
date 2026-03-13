@@ -15,7 +15,10 @@ from logger import setup_logger
 from map import GameMap
 from tank import PlayerTank, EnemyTank
 from bullet import Bullet
-from ui import Menu, HUD, GameOverScreen, PauseScreen
+from ui import Menu, HUD, GameOverScreen, PauseScreen, LevelSelectScreen
+
+# 额外游戏状态
+STATE_LEVEL_SELECT = 5
 
 
 class Game:
@@ -37,6 +40,7 @@ class Game:
         self.state = STATE_MENU
         self.score = 0
         self.level = 1
+        self.max_unlocked_level = 1  # 最大解锁关卡
 
         # 游戏对象
         self.map = None
@@ -50,6 +54,7 @@ class Game:
         self.hud = HUD()
         self.pause_screen = PauseScreen()
         self.game_over_screen = None
+        self.level_select_screen = None
 
         # 按键状态
         self.keys_pressed = {
@@ -62,12 +67,12 @@ class Game:
 
         self.logger.info("游戏初始化完成")
 
-    def start_game(self):
+    def start_game(self, level=1):
         """开始新游戏"""
-        self.logger.info("开始新游戏")
+        self.logger.info(f"开始新游戏 - 第 {level} 关")
         self.state = STATE_PLAYING
         self.score = 0
-        self.level = 1
+        self.level = level
 
         # 清空精灵组
         self.enemies.empty()
@@ -76,7 +81,7 @@ class Game:
 
         # 加载地图
         self.map = GameMap()
-        self.map.load_map()
+        self.map.load_map(level)
 
         # 创建玩家
         player_spawn, _ = self.map.get_spawn_points()
@@ -119,6 +124,9 @@ class Game:
                     elif self.state == STATE_PAUSED:
                         self.state = STATE_PLAYING
                         self.logger.info("游戏继续")
+                    elif self.state == STATE_LEVEL_SELECT:
+                        self.state = STATE_MENU
+                        self.logger.info("返回主菜单")
 
             if self.state == STATE_PLAYING:
                 if event.type == pygame.KEYDOWN:
@@ -220,11 +228,21 @@ class Game:
         # 检查胜利条件
         if len([e for e in self.enemies if e.alive]) == 0:
             self.logger.info("所有敌人被消灭，关卡完成")
-            self.level += 1
-            self.spawn_enemies()
+            if self.level < 5:
+                self.level += 1
+                # 解锁新关卡
+                if self.level > self.max_unlocked_level:
+                    self.max_unlocked_level = self.level
+                self.spawn_enemies()
+            else:
+                # 通关所有关卡
+                self.logger.info("恭喜！通关所有关卡！")
+                self.state = STATE_GAME_OVER
+                self.game_over_screen = GameOverScreen(victory=True)
 
         # 更新HUD
         self.hud.score = self.score
+        self.hud.level = self.level
 
     def draw(self):
         """绘制游戏画面"""
@@ -234,11 +252,25 @@ class Game:
             result = self.menu.update(mouse_pos, mouse_pressed)
 
             if result == 'start':
-                self.start_game()
+                self.state = STATE_LEVEL_SELECT
+                self.level_select_screen = LevelSelectScreen(max_level=5)
             elif result == 'quit':
                 self.running = False
 
             self.menu.draw(self.screen)
+
+        elif self.state == STATE_LEVEL_SELECT:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+            result = self.level_select_screen.update(mouse_pos, mouse_pressed)
+
+            if result and result.startswith('level_'):
+                level = int(result.split('_')[1])
+                self.start_game(level)
+            elif result == 'back':
+                self.state = STATE_MENU
+
+            self.level_select_screen.draw(self.screen)
 
         elif self.state == STATE_PLAYING:
             # 绘制地图
@@ -270,7 +302,7 @@ class Game:
             if result == 'resume':
                 self.state = STATE_PLAYING
             elif result == 'restart':
-                self.start_game()
+                self.start_game(self.level)
             elif result == 'menu':
                 self.state = STATE_MENU
             elif result == 'quit':
@@ -291,7 +323,7 @@ class Game:
             result = self.game_over_screen.update(mouse_pos, mouse_pressed)
 
             if result == 'restart':
-                self.start_game()
+                self.start_game(self.level)
             elif result == 'menu':
                 self.state = STATE_MENU
             elif result == 'quit':
